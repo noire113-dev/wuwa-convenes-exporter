@@ -1,63 +1,62 @@
-# 原神祈愿记录导出工具
+# WuWa Convenes Exporter (명조 튜닝 기록 내보내기)
 
-中文 | [English](https://github.com/biuuu/genshin-wish-export/blob/main/docs/README_EN.md)
+명조: 워더링 웨이브(Wuthering Waves) PC판의 **튜닝(가챠) 기록**을 가져와 내 PC에 저장하고, 풀별 통계와 그래프로 보여 주는 도구입니다.
 
-一个使用 Electron 制作的小工具，需要在 Windows 64位操作系统上运行。
+[biuuu/genshin-wish-export](https://github.com/biuuu/genshin-wish-export)를 포크해, 같은 화면 구성(원형 그래프 + 풀별 통계)을 명조에 맞게 새로 만들었습니다.
 
-通过读取游戏日志或者代理模式获取访问游戏祈愿记录 API 所需的 authKey，然后再使用获取到的 authKey 来读取游戏祈愿记录。
+## 기능
 
-工具会在当前目录下的 `userData` 文件夹里保存数据，获取到新的祈愿记录时，会与本地数据合并后保存。
+- 게임 로그에서 튜닝 기록 URL 자동 검색
+  - 최신 클라이언트는 `Client.log`를 암호화(XOR)해 저장하는데, 이것도 해독해서 찾습니다.
+- 게임의 튜닝 기록 화면과 같은 6개 풀
+  - 공명자 이벤트 튜닝 · 무기 이벤트 튜닝 · 공명자 레귤러 튜닝 · 무기 레귤러 튜닝 · 여정이 남긴 캐릭터 튜닝 · 여정이 남긴 무기 튜닝
+- 풀별 통계
+  - 총 뽑기 수, 현재 천장, 5성·4성·3성 개수와 비율
+  - 5성 기록과 각 천장 카운트, 평균 5성 천장
+  - 공명자 이벤트 튜닝: 통상 5성(반반 실패)은 회색 기울임체로 표시, 반반 승률
+- **기록 누적 저장**: 게임 서버는 최근 약 6개월 기록만 보여 주지만, 업데이트할 때마다 기존 기록과 합쳐 저장하므로 오래된 기록도 남습니다. 같은 기록은 중복 저장되지 않습니다.
+- 엑셀(.xlsx) 내보내기: 풀별 시트, 회차·천장 카운트·통상 여부 포함
+- JSON 내보내기 / 가져오기(기존 기록과 병합), 여러 계정(UID) 전환
 
-需要更详细的数据分析，可以在导出 Excel 文件后使用这个项目的网页：[链接](https://github.com/voderl/genshin-gacha-analyzer)
+## 사용법
 
-## 从 Excel 恢复数据
-https://genshin-gacha-export.danmu9.com
+1. [Releases](https://github.com/noire113-dev/wuwa-convenes-exporter/releases)에서 zip을 받아 원하는 폴더에 압축을 풉니다.
+2. 게임을 켜고 **튜닝 → 기록** 화면을 엽니다.
+3. `WuWa Convenes Exporter.exe`를 실행하고 **튜닝 기록 불러오기**(이후에는 **기록 업데이트**)를 누릅니다.
 
-可以通过这个网页从 Excel 文件导出 JSON 数据，也可以在网页上选择截止时间来去除重复数据。
+- 게임 폴더는 기본 위치에서 자동으로 찾습니다. 못 찾으면 **더보기 → 설정 → 게임 폴더**에서 런처 폴더(`Wuthering Waves`)를 지정하세요.
+- URL은 시간이 지나면 만료됩니다. "URL이 만료됐습니다"가 뜨면 게임에서 기록 화면을 다시 연 뒤 업데이트하세요.
+- 자동 검색이 안 되면 **더보기 → URL로 가져오기**에 URL을 직접 붙여 넣을 수 있습니다.
 
-将下载的JSON文件复制到工具的 userData 文件夹即可恢复数据。
+## 데이터 저장 위치
 
-使用网页时一定要确保填写正确的 UID， 选择正确的 Excel 文件里使用的语言。
-## 其它语言
+기록은 exe와 같은 폴더의 `userData`에 저장됩니다. 이 폴더를 백업하면 기록이 보존됩니다.
 
-修改`src/i18n/`目录下的 json 文件就可以翻译到对应的语言。如果觉得已有的翻译有不准确或可以改进的地方，可以随时修改发 Pull Request。
+- `gacha-list-<UID>.json`: 계정별 튜닝 기록 (저장할 때마다 직전 파일을 `.bak`으로 남김)
+- `config.json`: 게임 폴더 등 설정과 마지막으로 쓴 URL
 
-## 使用说明
+기록 조회는 게임 공식 서버(`gmserver-api.aki-game2.net`, 국내판 `.com`)에만 요청하며, 그 밖의 곳으로 데이터를 보내지 않습니다.
 
-1. 下载工具后解压 - 下载地址: [Github](https://github.com/biuuu/genshin-wish-export/releases/latest/download/Genshin-Wish-Export.zip) / [蓝奏云](https://wwvt.lanzoum.com/b01zxlweh) 密码：gepz
-2. 打开游戏的祈愿历史记录
+## 개발
 
-   ![祈愿历史记录](/docs/wish-history.png)
-3. 点击工具的“加载数据”按钮
+Node.js 20 이상이 필요합니다.
 
-   ![加载数据](/docs/load-data.png)
-
-   如果没出什么问题的话，你会看到正在读取数据的提示，最终效果如下图所示
-
-   <details>
-    <summary>展开图片</summary>
-
-   ![预览](/docs/preview.png)
-
-   </details>
-
-如果需要导出多个账号的数据，可以点击旁边的加号按钮。
-
-然后游戏切换的新账号，再打开祈愿历史记录，工具再点击“加载数据”按钮。
-
-## Devlopment
-
-```
-# 安装模块
-yarn install
-
-# 开发模式
-yarn dev
-
-# 构建一个可以运行的程序
-yarn build
+```bash
+npm install
+npm start          # 실행 (start.bat 더블클릭도 가능)
+npm test           # 병합·천장 계산·URL 해독 검사
+npm run build      # dist/ 에 exe 폴더 생성
 ```
 
-## License
+- `main.js`: Electron 메인 프로세스 (IPC, 파일 저장, 대화상자)
+- `src/url.js`: 로그에서 URL 찾기·해독·파싱
+- `src/api.js`: 튜닝 기록 API 호출
+- `src/store.js`, `src/stats.js`: 로컬 저장, 기록 병합, 통계·천장 계산
+- `src/excel.js`: 엑셀 내보내기
+- `renderer/`: 화면 (Vue 3 + Element Plus + ECharts)
 
-[MIT](https://github.com/biuuu/genshin-wish-export/blob/main/LICENSE)
+## 라이선스
+
+MIT. 원본 프로젝트 [genshin-wish-export](https://github.com/biuuu/genshin-wish-export)의 라이선스를 따릅니다.
+
+이 도구는 Kuro Games와 관계없는 비공식 팬 도구입니다.

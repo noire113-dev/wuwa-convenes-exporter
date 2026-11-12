@@ -1,0 +1,171 @@
+const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu } = require('electron')
+const path = require('path')
+const fs = require('fs')
+const { Store } = require('./src/store')
+const { parseGachaUrl, findGachaUrl, detectGameDir } = require('./src/url')
+const { fetchAll } = require('./src/api')
+const { exportExcel } = require('./src/excel')
+
+// 참고 앱처럼 실행 파일(개발 중에는 프로젝트) 옆 userData 폴더에 저장
+const appRoot = app.isPackaged ? path.dirname(process.execPath) : __dirname
+const store = new Store(process.env.WUWA_DATA_DIR || path.join(appRoot, 'userData'))
+let win
+
+function createWindow () {
+  Menu.setApplicationMenu(null)
+  win = new BrowserWindow({
+    width: 1100,
+    height: Number(process.env.WUWA_HEIGHT) || 760,
+    minWidth: 720,
+    minHeight: 500,
+    title: '명조 튜닝 기록 내보내기',
+    backgroundColor: '#ffffff',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  })
+  win.loadFile(path.join(__dirname, 'renderer', 'index.html'))
+  if (process.env.WUWA_DEVTOOLS) win.webContents.openDevTools({ mode: 'detach' })
+  // 개발용: 화면을 캡처해 파일로 저장하고 종료
+  if (process.env.WUWA_SCREENSHOT) {
+    win.webContents.on('console-message', (_e, level, msg) => console.log('[renderer]', msg))
+    win.webContents.once('did-finish-load', () => setTimeout(async () => {
+      const js = process.env.WUWA_SCREENSHOT_JS
+      if (js) { await win.webContents.executeJavaScript(js); await new Promise(r => setTimeout(r, 800)) }
+      const img = await win.webContents.capturePage()
+      fs.writeFileSync(process.env.WUWA_SCREENSHOT, img.toPNG())
+      app.quit()
+    }, 2500))
+  }
+}
+
+const progress = text => { if (win && !win.isDestroyed()) win.webContents.send('progress', text) }
+
+function state (current) {
+  const config = store.loadConfig()
+  const accounts = store.listAccounts()
+  const uid = current || config.current || accounts[0] || ''
+  return { config, accounts, current: uid, data: store.loadAccount(uid), dataDir: store.dir }
+}
+
+ipcMain.handle('init', () => {
+  const config = store.loadConfig()
+  if (!config.gameDir) {
+    config.gameDir = detectGameDir('')
+    store.saveConfig(config)
+  }
+  return state()
+})
+
+ipcMain.handle('load-account', (_e, uid) => {
+  const config = store.loadConfig()
+  config.current = uid
+  store.saveConfig(config)
+  return state(uid)
+})
+
+ipcMain.handle('save-config', (_e, patch) => {
+  const config = Object.assign(store.loadConfig(), patch)
+  store.saveConfig(config)
+  return config
+})
+
+function resolveUrl (manualUrl) {
+  if (manualUrl) return { url: manualUrl, from: '직접 입력' }
+  const config = store.loadConfig()
+  const found = findGachaUrl([config.gameDir, detectGameDir(config.gameDir)])
+  if (found.url) return { url: found.url, from: path.basename(found.file) }
+  // 로그에 없으면 지난번에 쓴 URL로 시도 (만료됐을 수 있음)
+  const saved = config.urls && config.urls[config.current]
+  if (saved) return { url: saved, from: '저장된 URL' }
+  return { url: null }
+}
+
+ipcMain.handle('fetch-data', async (_e, manualUrl) => {
+  const { url, from } = resolveUrl(manualUrl)
+  if (!url) {
+    throw new Error('튜닝 기록 URL을 찾지 못했습니다. 게임에서 튜닝 → 기록 화면을 한 번 연 뒤 다시 시도하거나, 설정에서 게임 폴더를 확인하세요.')
+  }
+  const info = parseGachaUrl(url)
+  if (!info) throw new Error('올바른 튜닝 기록 URL이 아닙니다.')
+  progress(`URL 확인 (${from}) · UID ${info.playerId}`)
+  const pools = await fetchAll(info, progress)
+  const fetchedTotal = Object.values(pools).reduce((a, p) => a + p.records.length, 0)
+  const before = store.loadAccount(info.playerId)
+  const { added } = store.mergeAccount(info, pools, 'api')
+  const config = store.loadConfig()
+  config.urls = Object.assign({}, config.urls, { [info.playerId]: info.url })
+  config.current = info.playerId
+  store.saveConfig(config)
+  const st = state(info.playerId)
+  st.result = { added, fetchedTotal, maybeExpired: fetchedTotal === 0 && !!before }
+  return st
+})
+
+ipcMain.handle('copy-url', () => {
+  const { url } = resolveUrl()
+  if (url) clipboard.writeText(url)
+  return !!url
+})
+
+ipcMain.handle('export-excel', async (_e, uid) => {
+  const data = store.loadAccount(uid)
+  if (!data) return false
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
+    title: '엑셀로 내보내기',
+    defaultPath: path.join(app.getPath('documents'), `명조튜닝기록_${uid}_${stamp}.xlsx`),
+    filters: [{ name: 'Excel', extensions: ['xlsx'] }]
+  })
+  if (canceled || !filePath) return false
+  await exportExcel(data, filePath)
+  shell.showItemInFolder(filePath)
+  return true
+})
+
+ipcMain.handle('export-json', async (_e, uid) => {
+  const data = store.loadAccount(uid)
+  if (!data) return false
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
+    title: 'JSON으로 내보내기',
+    defaultPath: path.join(app.getPath('documents'), `wuwa-convene-${uid}.json`),
+    filters: [{ name: 'JSON', extensions: ['json'] }]
+  })
+  if (canceled || !filePath) return false
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8')
+  shell.showItemInFolder(filePath)
+  return true
+})
+
+ipcMain.handle('import-json', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+    title: 'JSON 가져오기',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+    properties: ['openFile']
+  })
+  if (canceled || !filePaths.length) return null
+  const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'))
+  if (!data || !data.playerId || !data.pools) throw new Error('이 도구에서 내보낸 JSON 형식이 아닙니다.')
+  const { added } = store.mergeAccount({ playerId: String(data.playerId), serverId: data.serverId, lang: data.lang }, data.pools, 'import')
+  const st = state(String(data.playerId))
+  st.result = { added }
+  return st
+})
+
+ipcMain.handle('pick-game-dir', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+    title: '명조 설치 폴더 선택',
+    properties: ['openDirectory']
+  })
+  if (canceled || !filePaths.length) return null
+  return filePaths[0]
+})
+
+ipcMain.handle('detect-game-dir', () => detectGameDir(''))
+ipcMain.handle('open-data-dir', () => shell.openPath(store.dir))
+ipcMain.handle('open-external', (_e, url) => { if (/^https:\/\//.test(url)) shell.openExternal(url) })
+
+app.whenReady().then(createWindow)
+app.on('window-all-closed', () => app.quit())

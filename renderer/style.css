@@ -1,0 +1,56 @@
+html, body { margin: 0; background: #fff; font-family: "Malgun Gothic", "Segoe UI", system-ui, sans-serif; }
+.app-root { padding: 16px 24px 0; }
+.relative { position: relative; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn-group { display: flex; gap: 8px; align-items: center; }
+.btn-group .el-button + .el-button { margin-left: 0; }
+.w-44 { width: 11rem; }
+.status-line { color: #9ca3af; font-size: 12px; margin: 8px 0; min-height: 16px; }
+.pool-grid { display: grid; gap: 16px; grid-template-columns: 1fr; padding-bottom: 16px; }
+@media (min-width: 640px) { .pool-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .pool-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1536px) { .pool-grid { grid-template-columns: repeat(4, 1fr); } }
+.pool-card { margin-bottom: 16px; min-width: 0; }
+.pool-title { text-align: center; color: #4b5563; margin: 8px 0; }
+.chart { position: relative; height: 12rem; margin-bottom: 8px; }
+@media (min-width: 1024px) { .chart { height: 14rem; } }
+@media (min-width: 1280px) { .chart { height: 16rem; } }
+.chart-inner { position: absolute; inset: 0; }
+p { margin: 0; }
+.text-xs { font-size: 12px; line-height: 1.6; }
+.text-lg { font-size: 18px; margin: 0; font-weight: 500; }
+.text-gray-400 { color: #9ca3af; }
+.text-gray-500 { color: #6b7280; }
+.text-gray-600 { color: #4b5563; }
+.text-blue { color: #2563eb; }
+.text-blue2 { color: #3b82f6; }
+.text-green { color: #059669; }
+.text-yellow { color: #eab308; }
+.text-purple { color: #9333ea; }
+.text-center { text-align: center; }
+.nowrap { white-space: nowrap; }
+.pre { white-space: pre; }
+.help { cursor: help; }
+.min-w-10 { display: inline-block; min-width: 3.6rem; }
+.ssr { display: inline-block; white-space: nowrap; }
+.mx-1 { margin: 0 4px; }
+.mx-2 { margin: 0 8px; }
+.mr-1 { margin-right: 4px; }
+.mr-3 { margin-right: 12px; }
+.mb-1 { margin: 0 0 4px; }
+.mb-2 { margin: 0 0 8px; }
+.mt-1 { margin: 4px 0 0; }
+.my-4 { margin: 16px 0; }
+/* 통상(상시 5성, 반반 실패): 회색 기울임체로 한정 5성과 구분 */
+.std { color: #9ca3af; font-style: italic; }
+.empty { color: #4b5563; font-size: 14px; line-height: 2; margin-top: 48px; text-align: center; }
+.empty-title { font-size: 16px; margin-bottom: 8px; }
+.hint { color: #9ca3af; font-size: 12px; line-height: 1.6; margin: 6px 0 0; }
+.dlg-hint { color: #6b7280; font-size: 13px; margin: 0 0 16px; }
+.setting-panel { position: fixed; inset: 0; background: #fff; padding: 8px 24px 16px; overflow-y: auto; z-index: 100; }
+.setting-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.flex-row { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; }
+.flex-row .el-input { flex: 1; min-width: 240px; }
+.flex-row .el-button + .el-button { margin-left: 0; }
+.setting-panel .el-form-item__content { flex-direction: column; align-items: flex-start; }
+.max-w-md { max-width: 28rem; }
