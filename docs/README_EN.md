@@ -1,6 +1,7 @@
 # WuWa Convenes Exporter
 
 [한국어](../README.md) | **English**
+<img width="1280" height="876" alt="image" src="https://github.com/user-attachments/assets/9323f620-928d-4126-a280-78d6b4ef9d40" />
 
 A tool that fetches your **Convene (gacha) history** from Wuthering Waves on PC, keeps it on your own computer, and shows per-banner statistics and charts.
 
