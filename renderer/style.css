@@ -1,4 +1,13 @@
-html, body { margin: 0; background: #fff; font-family: "Malgun Gothic", "Segoe UI", system-ui, sans-serif; }
+@font-face {
+  font-family: "Pretendard Variable";
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  src: url("vendor/PretendardVariable.woff2") format("woff2-variations");
+}
+:root { --app-font: "Pretendard Variable", Pretendard, "Malgun Gothic", "Segoe UI", system-ui, sans-serif; --el-font-family: var(--app-font); }
+html, body { margin: 0; background: #fff; font-family: var(--app-font); }
+.link { cursor: pointer; color: #60a5fa; }
 .app-root { padding: 16px 24px 0; }
 .relative { position: relative; }
 .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }

@@ -1,4 +1,6 @@
 // 쿠로 튜닝 기록 API 호출
+const { t, poolName } = require('./i18n')
+
 // 게임 튜닝 기록 화면의 6개 풀 (서버의 cardPoolType 번호 → 게임 표기 이름)
 const POOLS = [
   { type: 1, name: '공명자 이벤트 튜닝' },
@@ -58,18 +60,18 @@ function normalize (list, type) {
   }))
 }
 
-async function fetchAll (info, onProgress) {
+// lang: 진행 문구·오류 문구의 언어 (저장되는 풀 이름은 데이터 호환을 위해 한국어 그대로)
+async function fetchAll (info, onProgress, lang = 'ko') {
   const result = {}
   for (const pool of POOLS) {
-    onProgress && onProgress(`${pool.name} 기록을 가져오는 중…`)
+    const label = poolName(lang, pool.type, pool.name)
+    onProgress && onProgress(t(lang, 'main.fetching', { pool: label }))
     let raw
     try {
       raw = await fetchPool(info, pool.type)
     } catch (e) {
-      if (e.apiCode !== undefined) {
-        throw new Error(`튜닝 기록 URL이 만료됐습니다. 게임에서 튜닝 → 기록 화면을 다시 연 뒤 시도하세요. (서버 응답: ${e.message})`)
-      }
-      throw new Error(`${pool.name}: ${e.message}`)
+      if (e.apiCode !== undefined) throw new Error(t(lang, 'main.expired', { msg: e.message }))
+      throw new Error(`${label}: ${e.message}`)
     }
     result[pool.type] = { name: pool.name, records: normalize(raw, pool.type) }
     await sleep(350)

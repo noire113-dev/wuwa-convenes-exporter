@@ -1,5 +1,7 @@
 # WuWa Convenes Exporter (명조 튜닝 기록 내보내기)
 
+**한국어** | [English](docs/README_EN.md)
+
 명조: 워더링 웨이브(Wuthering Waves) PC판의 **튜닝(가챠) 기록**을 가져와 내 PC에 저장하고, 풀별 통계와 그래프로 보여 주는 도구입니다.
 
 [biuuu/genshin-wish-export](https://github.com/biuuu/genshin-wish-export)를 포크해, 같은 화면 구성(원형 그래프 + 풀별 통계)을 명조에 맞게 새로 만들었습니다.
@@ -17,6 +19,7 @@
 - **기록 누적 저장**: 게임 서버는 최근 약 6개월 기록만 보여 주지만, 업데이트할 때마다 기존 기록과 합쳐 저장하므로 오래된 기록도 남습니다. 같은 기록은 중복 저장되지 않습니다.
 - 엑셀(.xlsx) 내보내기: 풀별 시트, 회차·천장 카운트·통상 여부 포함
 - JSON 내보내기 / 가져오기(기존 기록과 병합), 여러 계정(UID) 전환
+- 화면 언어: 한국어 / English (**더보기 → 설정 → 언어**). 아이템 이름은 게임에서 기록 화면을 열 때의 언어로 저장됩니다.
 
 ## 사용법
 
@@ -53,10 +56,13 @@ npm run build      # dist/ 에 exe 폴더 생성
 - `src/api.js`: 튜닝 기록 API 호출
 - `src/store.js`, `src/stats.js`: 로컬 저장, 기록 병합, 통계·천장 계산
 - `src/excel.js`: 엑셀 내보내기
+- `src/i18n.js`: 화면·메시지·엑셀 번역 문자열 (한국어 / English)
 - `renderer/`: 화면 (Vue 3 + Element Plus + ECharts)
 
 ## 라이선스
 
 MIT. 원본 프로젝트 [genshin-wish-export](https://github.com/biuuu/genshin-wish-export)의 라이선스를 따릅니다.
+
+글꼴은 [Pretendard](https://github.com/orioncactus/pretendard)(SIL Open Font License 1.1)를 사용하며, 라이선스 전문은 빌드 시 `renderer/vendor/Pretendard-LICENSE.txt`로 함께 포함됩니다.
 
 이 도구는 Kuro Games와 관계없는 비공식 팬 도구입니다.
