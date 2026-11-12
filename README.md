@@ -1,6 +1,7 @@
 # WuWa Convenes Exporter (명조 튜닝 기록 내보내기)
 
 **한국어** | [English](docs/README_EN.md)
+<img width="1280" height="876" alt="image" src="https://github.com/user-attachments/assets/5d6b3c7c-b57f-47b1-9f9c-ea02d010457d" />
 
 명조: 워더링 웨이브(Wuthering Waves) PC판의 **튜닝(가챠) 기록**을 가져와 내 PC에 저장하고, 풀별 통계와 그래프로 보여 주는 도구입니다.
 
