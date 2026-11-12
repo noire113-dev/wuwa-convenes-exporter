@@ -60,6 +60,10 @@ npm run build      # creates the exe folder under dist/
 - `src/i18n.js`: UI, message and Excel strings (Korean / English)
 - `renderer/`: UI (Vue 3 + Element Plus + ECharts)
 
+## Development tools
+
+Claude and Codex were used in the development of this project.
+
 ## License
 
 MIT, following the original project [genshin-wish-export](https://github.com/biuuu/genshin-wish-export).

@@ -66,6 +66,10 @@ npm run build      # dist/ 에 exe 폴더 생성
 - `src/i18n.js`: 화면·메시지·엑셀 번역 문자열 (한국어 / English)
 - `renderer/`: 화면 (Vue 3 + Element Plus + ECharts)
 
+## 개발 도구
+
+이 프로젝트 개발에는 Claude와 Codex가 사용되었습니다.
+
 ## 라이선스
 
 MIT. 원본 프로젝트 [genshin-wish-export](https://github.com/biuuu/genshin-wish-export)의 라이선스를 따릅니다.
