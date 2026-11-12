@@ -1,7 +1,7 @@
 {
   "name": "wuwa-convenes-exporter",
   "productName": "명조 튜닝 기록 내보내기",
-  "version": "3.8.0",
+  "version": "3.8.1",
   "description": "명조: 워더링 웨이브 튜닝(가챠) 기록을 가져와 로컬에 저장하는 도구",
   "main": "main.js",
   "private": true,
