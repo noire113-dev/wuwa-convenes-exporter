@@ -4,16 +4,6 @@ const path = require('path')
 
 const GACHA_URL_RE = /https:\/\/aki-gm-resources(?:-oversea)?\.aki-game\.(?:net|com)\/aki\/gacha\/index\.html#\/record\?[^"\s<>'\\]+/g
 
-const DEFAULT_GAME_DIRS = [
-  'E:\\Game\\Wuthering Waves',
-  'C:\\Wuthering Waves',
-  'D:\\Wuthering Waves',
-  'E:\\Wuthering Waves',
-  'C:\\Program Files\\Wuthering Waves',
-  'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Wuthering Waves',
-  'C:\\Program Files\\Epic Games\\WutheringWavesj3oFh'
-]
-
 function parseGachaUrl (url) {
   const text = String(url || '').trim()
   const m = text.match(new RegExp(GACHA_URL_RE.source))
@@ -100,8 +90,11 @@ function findGachaUrl (gameDirs) {
   return { url: null, file: null, searched: dirs }
 }
 
-function detectGameDir (saved) {
-  return [saved, ...DEFAULT_GAME_DIRS].find(d => d && fs.existsSync(d)) || ''
+function isGameDir (dir) {
+  if (typeof dir !== 'string' || !dir.trim()) return false
+  return [dir, path.join(dir, 'Wuthering Waves Game')].some(root => {
+    try { return fs.statSync(path.join(root, 'Client')).isDirectory() } catch (_) { return false }
+  })
 }
 
-module.exports = { GACHA_URL_RE, parseGachaUrl, findGachaUrl, collectLogFiles, detectGameDir, decodeClientLog }
+module.exports = { GACHA_URL_RE, parseGachaUrl, findGachaUrl, collectLogFiles, isGameDir, decodeClientLog }

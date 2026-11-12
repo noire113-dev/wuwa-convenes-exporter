@@ -1,14 +1,14 @@
 {
   "name": "wuwa-convenes-exporter",
   "productName": "명조 튜닝 기록 내보내기",
-  "version": "3.8.1",
+  "version": "3.8.2",
   "description": "명조: 워더링 웨이브 튜닝(가챠) 기록을 가져와 로컬에 저장하는 도구",
   "main": "main.js",
   "private": true,
   "license": "MIT",
   "scripts": {
     "start": "node vendor.js && electron .",
-    "test": "node test/merge.test.js",
+    "test": "node test/merge.test.js && node --test test/updater.test.js",
     "build": "node vendor.js && node build.js"
   },
   "dependencies": {

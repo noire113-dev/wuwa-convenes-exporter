@@ -2,15 +2,23 @@ const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu } = require(
 const path = require('path')
 const fs = require('fs')
 const { Store } = require('./src/store')
-const { parseGachaUrl, findGachaUrl, detectGameDir } = require('./src/url')
+const { parseGachaUrl, findGachaUrl, isGameDir } = require('./src/url')
 const { fetchAll } = require('./src/api')
 const { exportExcel } = require('./src/excel')
 const i18n = require('./src/i18n')
+const { createUpdater } = require('./src/updater')
 
 // 참고 앱처럼 실행 파일(개발 중에는 프로젝트) 옆 userData 폴더에 저장
 const appRoot = app.isPackaged ? path.dirname(process.execPath) : __dirname
 const store = new Store(process.env.WUWA_DATA_DIR || path.join(appRoot, 'userData'))
 let win
+const updater = createUpdater(app, state => {
+  if (win && !win.isDestroyed()) win.webContents.send('update-state', state)
+})
+ipcMain.handle('check-update', () => updater.check())
+ipcMain.handle('download-update', () => updater.download())
+ipcMain.handle('restart-update', () => updater.restart())
+ipcMain.handle('update-state', () => updater.getState())
 
 function createWindow () {
   Menu.setApplicationMenu(null)
@@ -50,19 +58,13 @@ const progress = text => { if (win && !win.isDestroyed()) win.webContents.send('
 
 function state (current) {
   const config = store.loadConfig()
+  if (!isGameDir(config.gameDir)) config.gameDir = ''
   const accounts = store.listAccounts()
   const uid = current || config.current || accounts[0] || ''
   return { config, lang: lang(), version: app.getVersion(), accounts, current: uid, data: store.loadAccount(uid), dataDir: store.dir }
 }
 
-ipcMain.handle('init', () => {
-  const config = store.loadConfig()
-  if (!config.gameDir) {
-    config.gameDir = detectGameDir('')
-    store.saveConfig(config)
-  }
-  return state()
-})
+ipcMain.handle('init', () => state())
 
 ipcMain.handle('load-account', (_e, uid) => {
   const config = store.loadConfig()
@@ -72,6 +74,7 @@ ipcMain.handle('load-account', (_e, uid) => {
 })
 
 ipcMain.handle('save-config', (_e, patch) => {
+  if (patch.gameDir && !isGameDir(patch.gameDir)) throw new Error(tr('main.badGameDir'))
   const config = Object.assign(store.loadConfig(), patch)
   store.saveConfig(config)
   return config
@@ -80,7 +83,7 @@ ipcMain.handle('save-config', (_e, patch) => {
 function resolveUrl (manualUrl) {
   if (manualUrl) return { url: manualUrl, from: tr('main.fromManual') }
   const config = store.loadConfig()
-  const found = findGachaUrl([config.gameDir, detectGameDir(config.gameDir)])
+  const found = findGachaUrl([config.gameDir])
   if (found.url) return { url: found.url, from: path.basename(found.file) }
   // 로그에 없으면 지난번에 쓴 URL로 시도 (만료됐을 수 있음)
   const saved = config.urls && config.urls[config.current]
@@ -168,7 +171,6 @@ ipcMain.handle('pick-game-dir', async () => {
   return filePaths[0]
 })
 
-ipcMain.handle('detect-game-dir', () => detectGameDir(''))
 ipcMain.handle('open-data-dir', () => shell.openPath(store.dir))
 ipcMain.handle('open-external', (_e, url) => { if (/^https:\/\//.test(url)) shell.openExternal(url) })
 

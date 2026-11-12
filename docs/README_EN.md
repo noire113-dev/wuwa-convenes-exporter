@@ -27,7 +27,7 @@ Forked from [biuuu/genshin-wish-export](https://github.com/biuuu/genshin-wish-ex
 2. Launch the game and open **Convene → History**.
 3. Run `WuWa Convenes Exporter.exe` and click **Load Convene History** (**Update** afterwards).
 
-- The game folder is detected from common install locations. If it is not found, set the launcher folder (`Wuthering Waves`) in **More → Settings → Game folder**.
+- No default game path is used. On first launch or when the saved path is invalid, click **Set game folder** and select the launcher folder (`Wuthering Waves`) or `Wuthering Waves Game`.
 - The URL expires after a while. If you see "The Convene history URL has expired", open the history page in game again and update.
 - If auto detection fails, paste the URL manually via **More → Import from URL**.
 
@@ -66,3 +66,7 @@ MIT, following the original project [genshin-wish-export](https://github.com/biu
 The UI font is [Pretendard](https://github.com/orioncactus/pretendard) (SIL Open Font License 1.1); its license is bundled as `renderer/vendor/Pretendard-LICENSE.txt` in builds.
 
 This is an unofficial fan tool and is not affiliated with Kuro Games.
+
+## App updates
+
+The app checks GitHub stable releases on startup. Click **Update to v…** to download and verify SHA-256, then **Restart** to apply and relaunch. Local `userData` is preserved; a sibling `.backup-…` directory keeps the previous installation. Both the app directory and its parent must be writable, with enough free disk space. No game records or history URLs are sent to GitHub.

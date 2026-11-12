@@ -82,7 +82,9 @@ const SettingPanel = {
   setup (props, { emit }) {
     const st = reactive({ gameDir: props.config.gameDir || '', lang: LANG })
     watch(() => props.config, c => { st.gameDir = c.gameDir || '' })
-    const save = async patch => emit('changed', await bridge.saveConfig(patch))
+    const save = async patch => {
+      try { emit('changed', await bridge.saveConfig(patch)) } catch (e) { ElMessage.error(cleanErr(e)) }
+    }
     return {
       ...toRefs(st),
       t,
@@ -96,16 +98,6 @@ const SettingPanel = {
       async pick () {
         const d = await bridge.pickGameDir()
         if (d) { st.gameDir = d; save({ gameDir: d }) }
-      },
-      async detect () {
-        const d = await bridge.detectGameDir()
-        if (d) {
-          st.gameDir = d
-          save({ gameDir: d })
-          ElMessage.success(t('msg.dirFound'))
-        } else {
-          ElMessage.warning(t('msg.dirNotFound'))
-        }
       },
       async importJson () {
         try {
@@ -131,6 +123,7 @@ function makeApp (initial) {
     components: { PieChart, PoolDetail, SettingPanel },
     setup () {
       const s = reactive({
+        update: { status: 'idle', version: '', percent: 0 },
         loading: false,
         progress: '',
         config: {},
@@ -170,6 +163,7 @@ function makeApp (initial) {
       })
 
       async function fetchData (url) {
+        if (!url && !s.config.gameDir) { s.showSetting = true; return }
         s.loading = true
         s.progress = t('status.findingUrl')
         try {
@@ -210,6 +204,35 @@ function makeApp (initial) {
         try { await bridge.exportExcel(s.current) } catch (e) { ElMessage.error(cleanErr(e)) }
       }
 
+      const updateBusy = computed(() => ['checking', 'downloading', 'preparing', 'restarting'].includes(s.update.status))
+      const updateLabel = computed(() => t('update.' + ({
+        available: 'available', downloading: 'downloading', preparing: 'preparing',
+        ready: 'restart', restarting: 'restarting', 'download-error': 'retry',
+        unsupported: 'manual', error: 'check', checking: 'checking'
+      }[s.update.status] || 'check'), { version: s.update.version, percent: s.update.percent }))
+      async function checkUpdate (silent = false) {
+        try {
+          s.update = await bridge.checkUpdate()
+          if (!silent && ['latest', 'no-release'].includes(s.update.status)) ElMessage.success(t('update.' + s.update.status))
+        } catch (_) { if (!silent) ElMessage.error(t('update.checkError')) }
+      }
+      async function updateAction () {
+        try {
+          if (s.update.status === 'ready') {
+            s.update.status = 'restarting'
+            try { await bridge.restartUpdate() } catch (e) { s.update.status = 'ready'; throw e }
+          } else if (['available', 'download-error'].includes(s.update.status)) {
+            s.update = await bridge.downloadUpdate()
+          } else if (s.update.status === 'unsupported') {
+            await bridge.openExternal('https://github.com/noire113-dev/wuwa-convenes-exporter/releases/latest')
+          } else { await checkUpdate() }
+        } catch (_) { ElMessage.error(t('update.installError')) }
+      }
+      bridge.onUpdateState(state => { s.update = state })
+      onMounted(async () => {
+        s.update = await bridge.updateState()
+        await checkUpdate(true)
+      })
       bridge.onProgress(text => { s.progress = text })
 
       return {
@@ -219,6 +242,10 @@ function makeApp (initial) {
         visiblePools,
         hasData,
         statusText,
+        updateBusy,
+        updateLabel,
+        updateAction,
+        checkUpdate,
         fetchData,
         switchAccount,
         onCommand,
